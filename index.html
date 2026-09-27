@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>상하이 5일 플래너</title>
+<style>
+:root{
+  /* Triple(트리플) DESIGN.md 토큰 그대로 적용 */
+  --primary:#368FFF; --primary-pressed:#1A85E8; --sky:#1AADF6;
+  --blue-tint:#F1F7FF; --blue-wash:rgba(54,143,255,.07);
+  --canvas:#FFFFFF; --surface:#F5F6F7;
+  --heading:#1B1D1F; --body:#3A3E41; --secondary:#7E848A; --tertiary:#ADB1B5;
+  --border:#E8EAEC; --border-strong:#D5D8DB;
+  --success:#22C55E; --teal:#0ECEDB; --error:#FF3B30; --warning:#FAAD14;
+  --r-sm:12px; --r-lg:20px; --r-pill:9999px;
+  --sp-xs:4px; --sp-sm:8px; --sp-md:12px; --sp-base:16px; --sp-lg:24px; --sp-xl:32px; --sp-xxl:48px;
+  --sh-subtle:0 1px 3px rgba(0,0,0,.04); --sh-hover:0 4px 12px rgba(0,0,0,.08);
+  --sh-float:0 6px 20px rgba(0,0,0,.12); --sh-modal:0 8px 24px rgba(0,0,0,.16);
+  --ease-standard:cubic-bezier(.4,0,.2,1); --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  color-scheme:light;
+}
+/* 항상 주간(라이트) 모드로 고정 — 시스템 다크모드와 무관하게 이 팔레트만 사용 */
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{
+  margin:0; background:var(--surface); color:var(--body);
+  font-family:-apple-system,"system-ui","Segoe UI","Apple SD Gothic Neo","Malgun Gothic",Roboto,Helvetica,Arial,sans-serif;
+  font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0; text-wrap:balance; color:var(--heading)}
+p{margin:0}
+a{color:inherit; text-decoration:none}
+button{font:inherit; color:inherit}
+.tnum{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:720px; margin:0 auto; padding-inline:var(--sp-base)}
+
+/* ---------- top bar : tab-nav ---------- */
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  background:color-mix(in srgb, var(--canvas) 92%, transparent);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-in{display:flex; align-items:center; gap:var(--sp-md); padding-block:var(--sp-md) var(--sp-sm)}
+.brand-name{font-size:19px; font-weight:700; color:var(--heading); letter-spacing:-.01em; white-space:nowrap}
+.brand-dates{font-size:13px; color:var(--secondary); white-space:nowrap; margin-top:1px}
+
+.tabs{display:flex; gap:var(--sp-sm); overflow-x:auto; -webkit-overflow-scrolling:touch; padding-block:0 var(--sp-md); scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:none; min-height:40px; padding:9px 16px; border-radius:var(--r-pill); border:1px solid transparent;
+  background:var(--surface); color:var(--body); font-size:14px; font-weight:600; cursor:pointer;
+  white-space:nowrap; transition:background .15s var(--ease-standard),color .15s;
+}
+.tab:hover{background:var(--border)}
+.tab[aria-selected="true"]{background:var(--blue-wash); color:var(--primary); border-color:var(--primary)}
+.tab:focus-visible,.btn-primary:focus-visible,.btn:focus-visible,.chk:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+
+main{padding-block:var(--sp-xl) 64px}
+.panel{display:flex; flex-direction:column; gap:var(--sp-xl)}
+
+/* ---------- hero ---------- */
+.hero h1{font-size:32px; font-weight:700; line-height:1.3; letter-spacing:-.015em}
+.hero-sub{margin-top:var(--sp-sm); color:var(--secondary); font-size:16px; line-height:1.5}
+.btn-primary{
+  display:inline-flex; align-items:center; gap:8px; margin-top:var(--sp-lg);
+  height:56px; padding:0 28px; border-radius:var(--r-pill); border:0;
+  background:var(--primary); color:#fff; font-size:18px; font-weight:700; cursor:pointer;
+  box-shadow:var(--sh-subtle); transition:background .15s;
+}
+.btn-primary:hover{background:var(--primary-pressed)}
+
+/* ---------- section ---------- */
+.sec-head{display:flex; align-items:baseline; gap:var(--sp-sm); margin-bottom:var(--sp-md)}
+.sec-head h2{font-size:22px; font-weight:700; letter-spacing:-.01em}
+.sec-head .k{font-size:13px; color:var(--tertiary); margin-left:auto}
+
+/* ---------- card-place (white, 20px radius) ---------- */
+.card{background:var(--canvas); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--sh-subtle); padding:var(--sp-base)}
+
+/* ---------- flight ---------- */
+.rowgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:var(--sp-md)}
+.leg-label{font-size:13px; font-weight:600; color:var(--secondary)}
+.leg-main{display:flex; align-items:baseline; gap:10px; margin-top:var(--sp-sm)}
+.leg-time{font-size:28px; font-weight:700; color:var(--heading); letter-spacing:-.02em}
+.leg-port{font-size:16px; color:var(--body); font-weight:600}
+.leg-tz{font-size:13px; color:var(--tertiary); margin-top:2px}
+.leg-meta{display:flex; flex-wrap:wrap; gap:var(--sp-sm); margin-top:var(--sp-md)}
+.kv{font-size:13px; color:var(--secondary)}
+.kv b{color:var(--heading); font-weight:600}
+
+/* ---------- stay ---------- */
+.stay-name{font-size:19px; font-weight:700; color:var(--heading)}
+.stay-zh{margin-top:6px}
+.stay-addr{margin-top:var(--sp-sm); font-size:14px; color:var(--secondary); line-height:1.5}
+.stay-inout{display:flex; gap:var(--sp-md); flex-wrap:wrap; margin-top:var(--sp-base)}
+.inout{flex:1 1 150px; background:var(--surface); border-radius:var(--r-sm); padding:var(--sp-md)}
+.inout-l{font-size:12px; color:var(--secondary); font-weight:600}
+.inout-v{font-size:19px; font-weight:700; color:var(--heading); margin-top:2px}
+.inout-d{font-size:13px; color:var(--tertiary); margin-top:1px}
+
+/* ---------- zh chip (neutral — 블루는 인터랙션 전용) ---------- */
+.zh{display:inline-flex; border-radius:var(--r-sm); background:var(--surface); overflow:hidden; max-width:100%}
+.zh-t{padding:5px 10px; font-size:14px; color:var(--body); line-height:1.4; word-break:break-word}
+.zh-b{flex:none; min-height:32px; padding:0 10px; border:0; border-left:1px solid var(--border); background:transparent; color:var(--tertiary); font-size:12px; font-weight:600; cursor:pointer}
+.zh-b:hover{color:var(--primary); background:var(--blue-wash)}
+.zh-b.ok{color:var(--success)}
+
+/* ---------- day header ---------- */
+.dayhead{display:flex; align-items:baseline; gap:var(--sp-sm)}
+.dayhead .n{font-size:26px; font-weight:700; color:var(--heading); letter-spacing:-.01em}
+.dayhead .d{font-size:15px; color:var(--secondary)}
+.dayhead .c{margin-left:auto; font-size:13px; color:var(--tertiary)}
+
+/* ---------- timeline items ---------- */
+.tl{display:flex; flex-direction:column; gap:var(--sp-lg); margin-top:var(--sp-lg)}
+.item-head{display:flex; align-items:baseline; gap:8px}
+.item-time{font-size:17px; font-weight:700; color:var(--heading)}
+.item-time.none{color:var(--tertiary); font-weight:600}
+.item-kind{font-size:13px; color:var(--secondary); font-weight:500}
+.item-kind::before{content:"·"; margin-right:8px; color:var(--tertiary)}
+.item-card{margin-top:var(--sp-sm)}
+.item-title{font-size:17px; font-weight:700; color:var(--heading); line-height:1.4}
+.item-note{
+  margin-top:var(--sp-md); background:var(--blue-tint); border-radius:var(--r-sm);
+  padding:12px 14px; font-size:14px; color:var(--body); line-height:1.55; white-space:pre-line;
+}
+
+.places{display:flex; flex-direction:column; margin-top:var(--sp-md)}
+.place{padding-top:var(--sp-md); border-top:1px solid var(--border)}
+.place:first-child{border-top:0; padding-top:0}
+.place-desc{font-size:12px; font-weight:600; color:var(--tertiary); letter-spacing:.02em}
+.place-name{font-size:16px; font-weight:600; color:var(--heading); margin-top:2px; line-height:1.4}
+.place-zh{margin-top:8px}
+.place-meta{display:flex; flex-direction:column; gap:5px; margin-top:8px}
+.meta-row{display:flex; gap:8px; font-size:14px; color:var(--secondary); line-height:1.5}
+.meta-l{flex:none; color:var(--tertiary); font-size:13px; padding-top:1px}
+.meta-v{word-break:break-word; white-space:pre-line}
+.meta-v a{color:var(--primary); text-decoration:underline; text-underline-offset:2px; word-break:break-all}
+
+.btn{
+  display:inline-flex; align-items:center; gap:6px; margin-top:var(--sp-md);
+  min-height:40px; padding:0 16px; border-radius:var(--r-pill); border:0;
+  background:var(--blue-tint); color:var(--primary); font-size:14px; font-weight:600;
+  cursor:pointer; transition:background .15s;
+}
+.btn:hover{background:var(--blue-wash)}
+.btn.ghost{background:var(--surface); color:var(--body)}
+.btn.ghost:hover{background:var(--border)}
+
+/* ---------- checklist ---------- */
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:var(--sp-lg)}
+.col-l{font-size:13px; font-weight:600; color:var(--secondary); padding-bottom:var(--sp-sm); border-bottom:1px solid var(--border)}
+.checks{display:flex; flex-direction:column; gap:2px; margin-top:var(--sp-sm)}
+.chk{display:flex; align-items:center; gap:10px; min-height:40px; padding:8px; border-radius:var(--r-sm); border:0; background:transparent; text-align:left; cursor:pointer; width:100%; font-size:15px; color:var(--body)}
+.chk:hover{background:var(--surface)}
+.box{flex:none; width:20px; height:20px; border-radius:6px; border:1.5px solid var(--border-strong); display:grid; place-items:center}
+.box svg{opacity:0; transform:scale(.7); transition:.14s}
+.chk[aria-pressed="true"] .box{background:var(--success); border-color:var(--success)}
+.chk[aria-pressed="true"] .box svg{opacity:1; transform:scale(1); color:#fff}
+.chk[aria-pressed="true"] .chk-t{color:var(--tertiary); text-decoration:line-through}
+
+/* ---------- overview strip ---------- */
+.ovwrap{overflow-x:auto; -webkit-overflow-scrolling:touch; margin-inline:calc(var(--sp-base) * -1); padding-inline:var(--sp-base)}
+.ov{display:flex; gap:var(--sp-md); min-width:min-content; padding-bottom:4px}
+.ovday{flex:0 0 176px; background:var(--surface); border-radius:var(--r-lg); padding:var(--sp-md)}
+.ovday-h{display:flex; align-items:baseline; gap:6px; padding-bottom:var(--sp-sm); border-bottom:1px solid var(--border)}
+.ovday-n{font-size:15px; font-weight:700; color:var(--heading)}
+.ovday-d{font-size:12px; color:var(--tertiary)}
+.ovlist{display:flex; flex-direction:column; gap:7px; margin-top:var(--sp-sm)}
+.ovrow{display:flex; gap:8px; font-size:13px; line-height:1.5}
+.ovrow .t{flex:none; width:36px; color:var(--tertiary)}
+.ovrow .v{color:var(--body); white-space:pre-line}
+
+/* ---------- wish list ---------- */
+.wish{display:flex; flex-direction:column}
+.wrow{display:flex; align-items:flex-start; gap:var(--sp-md); padding:var(--sp-md) 0; border-top:1px solid var(--border)}
+.wrow:first-child{border-top:0; padding-top:0}
+.wtag{flex:none; font-size:12px; font-weight:600; color:var(--secondary); background:var(--surface); padding:4px 10px; border-radius:var(--r-pill); margin-top:2px}
+.wmain{flex:1 1 180px; min-width:0}
+.wname{font-size:16px; font-weight:600; color:var(--heading)}
+.wsub{font-size:14px; color:var(--secondary); margin-top:3px; line-height:1.5}
+
+footer{margin-top:var(--sp-xl); padding-top:var(--sp-base); border-top:1px solid var(--border); font-size:13px; color:var(--tertiary); line-height:1.7}
+
+@media (max-width:460px){
+  .hero h1{font-size:26px}
+  .dayhead .n{font-size:22px}
+  .leg-time{font-size:24px}
+  main{padding-block:var(--sp-lg) 48px}
+  .panel{gap:var(--sp-lg)}
+  .card{padding:var(--sp-md)}
+  .btn-primary{width:100%; justify-content:center}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="topbar-in">
+      <div>
+        <div class="brand-name">상하이 5일 플래너</div>
+        <div class="brand-dates tnum">2026.10.01 – 10.05</div>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="panels"></div>
+  <footer>
+    원본 구글 스프레드시트 내용을 그대로 옮겼습니다. 시간은 모두 <b>중국 현지시간(CST, UTC+8)</b> 기준이며,
+    인천 출발편만 한국시간(KST)이 함께 표시됩니다.<br>
+    모든 장소의 <b>고덕지도</b> 버튼은 시트의 고덕지도 링크로 연결되고, 링크가 없는 곳은 중국어 이름으로 고덕지도 검색을 엽니다.<br>
+    디자인은 <a href="https://triple.guide" target="_blank" rel="noopener" style="text-decoration:underline">Triple(트리플)</a> 디자인 시스템 토큰을 참고했습니다.
+  </footer>
+</main>
+
+<script>
+/* ============ 데이터 (구글 시트 원문, 시간은 중국 현지시간 CST 기준으로 정리) ============ */
+var HOTEL = {
+  name:"Radisson Collection Hyland Shanghai",
+  zh:"上海丽笙精选海仑宾馆",
+  map:"https://surl.amap.com/botrE7E126XJ",
+  addr:"南京东路505号(南京东路地铁站4号口步行150米)"
+};
+function h(extra){ var o={name:HOTEL.name, zh:HOTEL.zh, map:HOTEL.map, addr:HOTEL.addr}; if(extra) o.desc=extra; return o; }
+
+var BLOG = "https://blog.naver.com/gsmom1113/224413686433";
+function breakfast(){
+  return [
+    {desc:"아침 · 배달 · 지엔빙", name:"산동잡곡전병", zh:"山东杂粮煎饼", map:"https://surl.amap.com/1yfwV50e9up", addr:"黄浦区广西北路430号(人民广场地铁站19号口步行430米)", link:BLOG},
+    {desc:"아침 · 배달 · 소양생전 (구운만두)", name:"양스덤플링", zh:"小杨生煎(上海宁波路店)", map:"https://surl.amap.com/jbhtujUA5HV", addr:"黄浦区上海城区宁波路178号(南京东路地铁站6号口步行80米)", link:BLOG},
+    {desc:"아침 · 배달 · 과일", name:"과일NOW", zh:"切果NOW", map:"", addr:"", link:BLOG},
+    {desc:"아침 · 배달 · 양쯔깐루", name:"고체 양쯔깐루", zh:"LUNABERRi 希腊酸奶碗", map:"https://surl.amap.com/fYrR82z2cZ", addr:"", link:BLOG},
+    {desc:"아침 · 배달 · 가정식", name:"가정식 1", zh:"毛家湘菜馆（人民广场店)", map:"https://surl.amap.com/6V1Q9HIg7tc", addr:"黄浦区武胜路218号上海迪美购物中心", link:BLOG},
+    {desc:"아침 · 배달 · 가정식", name:"가정식 2", zh:"胖娃重庆小面(众乐新邨店)", map:"https://surl.amap.com/7b3ZtKG1v7xx", addr:"静安区武定路519号(美丽园商厦斜对面)", link:BLOG}
+  ];
+}
+
+var KINDLABEL = {move:"이동", stay:"숙소", food:"식사", shop:"쇼핑", sight:"구경", night:"밤"};
+
+var DAYS = [
+  {
+    id:"d1", label:"1일차", date:"2026.10.01", dow:"목",
+    blocks:[
+      {time:"09:40", title:"상하이 도착", kind:"move", places:[
+        {name:"푸동 국제공항", zh:"上海浦东国际机场2号航站", map:"https://surl.amap.com/4bWddJoz7Oe", addr:"机场镇纬一路100号"}
+      ]},
+      {time:"11:00", title:"숙소 도착", kind:"stay", places:[
+        {name:HOTEL.name, zh:HOTEL.zh, map:HOTEL.map, addr:"Shanghai, Shanghai, 505 Nanjing Road East, Puxi, Shanghai, China, 200001", note:"南京东路505号(南京东路地铁站4号口步行150米)"}
+      ]},
+      {time:"13:00", title:"체크인 + 정비", kind:"stay", places:[]},
+      {time:"13:30", title:"점심 (대호춘, 훠궈)", kind:"food", places:[
+        {name:"대호춘", zh:"大壶春", map:"https://surl.amap.com/7I2mo7Q5bbi", addr:"上海市黄浦区山西南路与南京路步行街交叉口西北40米"},
+        {name:"훠궈", zh:"重庆高老九火锅(上海旗舰店)", map:"https://surl.amap.com/6bH5YV81A5X7", addr:"九江路399号华盛大厦2楼(南京东路地铁站4号口步行70米)"},
+        {name:"페이다추", zh:"费大厨辣椒炒肉(悦荟广场店)", map:"https://surl.amap.com/fX5TVF81B6Wz", addr:"上海城区南京路步行街悦荟广场5楼", note:"돼지고기 고추볶음 필수"}
+      ]},
+      {time:"15:00", title:"제일백화점", kind:"shop", note:"도착하자마자 헌지우이치엔 웨이팅 걸기 (6층)", places:[
+        {desc:"옷가게", name:"W.Management", zh:"W.Management(第一百货南京东路店)", map:"https://surl.amap.com/3MCsJg1Ac6x", addr:"南京东路830号上海市第一百货商店B01层G 10-01B01-01-0019室"},
+        {desc:"화장품", name:"WOWCOLOUR", zh:"WOWCOLOUR潮流美妆集合店(上海世茂店)", map:"https://surl.amap.com/nH0dqWcdCs", addr:"南京东路789号上海世茂广场G层"}
+      ]},
+      {time:"18:30", title:"저녁", kind:"food", places:[
+        {name:"헌지우이치엔", zh:"很久以前羊肉串(南京路第一百货店)", map:"https://surl.amap.com/lEG2a2O3fH3", addr:"南京东路830号第一百货商业中心B馆6楼", note:"도착하자마자 웨이팅"}
+      ]},
+      {time:"20:00", title:"숙소 복귀 — 쉬는 타임", kind:"stay", places:[]},
+      {time:"21:00", title:"컨디션 봐서 술 (칵테일)", kind:"night", places:[
+        {name:"Roof Bar", zh:"Roof顶层酒吧(上海艾迪逊酒店)", map:"https://surl.amap.com/abkvFQi1A01z", addr:"上海市黄浦区南京东路199号艾迪逊酒店29楼(酒店东门,江西中路271号)"}
+      ]}
+    ]
+  },
+  {
+    id:"d2", label:"2일차", date:"2026.10.02", dow:"금",
+    blocks:[
+      {time:"06:00", title:"기상 !!!", kind:"stay", places:[h()]},
+      {time:"08:30", title:"메이크업샵", kind:"sight", places:[
+        {name:"一术家·化妆造型STUDIO", zh:"一术家·化妆造型STUDIO(人民广场店)", map:"https://surl.amap.com/eXfAvNc59Oy", addr:"云南南路与淮海东路交叉口西北40米", note:"기본 헤어스탈 68위안, 복잡한 스타일 136위안\n메이크업은 288위안"}
+      ]},
+      {time:"11:30", title:"우캉멘션 ㄱㄱ (점심부터 먹기)", kind:"sight", places:[
+        {name:"우캉멘션", zh:"武康大楼", map:"https://surl.amap.com/mOPOCuaOdCL", addr:"淮海中路1850号"},
+        {desc:"점심 · 라오지스 (미슐랭)", name:"라오지스", zh:"老吉士饭馆(天平路店)", map:"https://surl.amap.com/aGT7KZY1za8e", addr:"天平路41号(近淮海中路)", note:"홍소육 먹기"}
+      ]},
+      {time:"13:00", title:"스냅 작가 만나는 곳", kind:"sight", places:[
+        {name:"DQ 아이스크림", zh:"DQ·蛋糕·冰淇淋(上海武康大楼店)", map:"https://surl.amap.com/1Ud2hho1k5D6", addr:"上海市长宁区兴国路408号(交通大学地铁站7号口步行350米)"}
+      ]},
+      {time:"15:00", title:"쇼핑 (우캉멘션 + 우캉루)", kind:"shop", places:[
+        {desc:"이탈리아 브랜드", name:"섭듀드", zh:"Subdued", map:"https://surl.amap.com/b6vRp0aR6P1", addr:"武康路378号"},
+        {desc:"명품 샘플샵", name:"하메이", zh:"HARMAY話梅(上海武康路店)", map:"https://surl.amap.com/dwhYizUl97R", addr:"武康路55号"},
+        {desc:"향수", name:"관샤", zh:"观夏闲庭(上海湖南路旗舰店)", map:"https://surl.amap.com/5FarFz412bDw", addr:"湖南路111号(上海图书馆地铁站3号口步行340米)"},
+        {desc:"편집샵", name:"tagi", zh:"Tagi. (乌鲁木齐中路店)", map:"https://surl.amap.com/9OjBfVUQdre", addr:"乌鲁木齐路247-5(常熟路地铁站8号口步行420米)"},
+        {desc:"편집샵", name:"룩나우", zh:"路可闹公园LOOKNOW PARK(淮海中路店)", map:"https://surl.amap.com/1w7klr8fgqC", addr:"湖南路街道淮海中路1008号1-3层"},
+        {desc:"옷집", name:"EMLESS", zh:"EMLESS线下商店(延庆路店)", map:"https://surl.amap.com/g4PLp1E50uF", addr:"延庆路121-9号(常熟路地铁站3号口步行280米)"},
+        {desc:"옷집", name:"Monday Sleeping Club", zh:"MondaySleepingClub周一睡觉俱乐部", map:"https://surl.amap.com/cZtVwGH8Dc", addr:"上海市徐汇区延庆路72号(常熟路地铁站3号口步行270米)"},
+        {desc:"커피 타임", name:"SLAB TOWN", zh:"SLAB TOWN", map:"https://surl.amap.com/naQiAOd6mC", addr:"富民路210弄1号"},
+        {desc:"빈티지 샵", name:"Basement FG Vintage", zh:"Basement FG Vintage", map:"https://surl.amap.com/1qTEYC1r5lS", addr:"新乐路82号3楼"}
+      ]},
+      {time:"19:00", title:"저녁 — 미슐랭 1스타 샤오룽바오", kind:"food", places:[
+        {name:"우요우시엔", zh:"屋有鲜", map:"https://surl.amap.com/6Fvo9qeg0fH", addr:"茂名南路7号1F-103号", note:"훈툰도 맛있대"}
+      ]},
+      {time:"20:00", title:"숙소 복귀", kind:"stay", places:[h()]},
+      {time:"22:00", title:"클럽 — 미리 MD 컨택 필요", kind:"night", places:[
+        {name:"INS", zh:"INS LAND新乐园", map:"https://surl.amap.com/o2Q9Yq24R", addr:"雁荡路109号"}
+      ]}
+    ]
+  },
+  {
+    id:"d3", label:"3일차", date:"2026.10.03", dow:"토",
+    blocks:[
+      {time:"10:00", title:"기상 !!! + 아침 배달", kind:"food", places:[h("숙소")].concat(breakfast())},
+      {time:"12:00", title:"출발", kind:"move", places:[h()]},
+      {time:"13:00", title:"매국노 되지말기 (여권 챙기기)", kind:"sight", places:[
+        {name:"상하이 임시정부", zh:"大韩民国临时政府旧址", map:"https://surl.amap.com/mNgAnbw1fus", addr:"马当路306弄4号"},
+        {desc:"신천지 쇼핑 · 명품 샘플샵", name:"하메이", zh:"HARMAY 話梅(上海新天地南北里店)", map:"https://surl.amap.com/l1Ebx0uG4o2", addr:"黄陂南路380号新天地thehouse新里L101-L206"},
+        {desc:"신천지 쇼핑", name:"메종프린스", zh:"MASONPRINCE(上海旗舰店)", map:"https://surl.amap.com/1QmouB0eaS7", addr:"淮海中路526弄之1-84号和合坊"}
+      ]},
+      {time:"14:30", title:"티엔즈팡", kind:"sight", places:[
+        {name:"티엔즈팡", zh:"上海田子坊", map:"https://surl.amap.com/mKGN1cyF5xA", addr:"泰康路210号(打浦桥地铁站1号口旁)"},
+        {desc:"녹차 기념품", name:"녹차 기념품샵 (찻잔)", zh:"延乐茶集", map:"https://surl.amap.com/bdDxYuWN8jG", addr:"泰康路248弄田子坊(打浦桥地铁站1号口步行90米)"},
+        {desc:"핸드크림", name:"칭즈 핸드크림", zh:"青稚护手霜(上海田子坊五店)", map:"https://surl.amap.com/beEs3UqhfnT", addr:"打浦桥街道泰康路274弄11号"},
+        {desc:"블랜버니", name:"블랜버니", zh:"布兰兔的植物庄园(田子坊店)", map:"https://surl.amap.com/9CaVHgeIeVZ", addr:"建国中路155弄35号临6临9"}
+      ]},
+      {time:"16:00", title:"점저 — 점도덕", kind:"food", places:[
+        {name:"점도덕", zh:"点都德(环宇荟店)", map:"https://surl.amap.com/J9WODkn2Uu", addr:"黄陂南路838弄环宇荟B1层B125-1-3、B153-1-2单元"}
+      ]},
+      {time:"17:00", title:"쇼핑 — 어반리비보", kind:"shop", places:[
+        {name:"URBAN REVIVO", zh:"URBAN REVIVO上海凯德晶萃广场LuOne店", map:"https://surl.amap.com/bxbrBhc1sd1Z", addr:"徐家汇路268号03层24,4层18+T117T118 URBAN REVIVO"}
+      ]},
+      {time:"18:00", title:"숙소 복귀", kind:"stay", places:[]},
+      {time:"22:00", title:"클럽 1차 — 창남 구경", kind:"night", places:[
+        {name:"Perry's", zh:"Perry's(新淮海二店)", map:"https://surl.amap.com/bnBgsdM1w1PQ", addr:"豫园街道淮海东路45-47号东淮海国际大厦3楼"}
+      ]},
+      {time:"23:00", title:"클럽 2차 — MD 미리 연락 필요", kind:"night", places:[
+        {name:"MAX", zh:"MAX", map:"https://surl.amap.com/izljilcs6Ar", addr:"淮海中路98号金钟广场二层(大世界地铁站6号口步行190米)"}
+      ]}
+    ]
+  },
+  {
+    id:"d4", label:"4일차", date:"2026.10.04", dow:"일",
+    blocks:[
+      {time:"10:00", title:"기상 !!! + 아침 배달", kind:"food", places:[h("숙소")].concat(breakfast())},
+      {time:"12:00", title:"출발", kind:"move", places:[h()]},
+      {time:"13:00", title:"쇼핑 — 따룬파 마트", kind:"shop", places:[
+        {name:"따룬파", zh:"大润发(平型关店)", map:"https://surl.amap.com/gHxKUTU102YN", addr:"俞泾港路11号B1层(西藏北路地铁站4号口步行440米)", note:"아이러브 상하이 티"}
+      ]},
+      {time:"15:00", title:"핫플 사진 찍기 — ICCF GARDEN", kind:"sight", places:[
+        {desc:"한남동 st 공원카페?", name:"ICCF GARDEN", zh:"之禾卡纷花园 ICCF GARDEN", map:"https://surl.amap.com/hs8ZuNM1e4i6", addr:"衡山路2号(常熟路地铁站7号口步行460米)"}
+      ]},
+      {time:"15:00", title:"핫플 사진 찍기 — BOOCUP", kind:"sight", places:[
+        {desc:"서점 편집샵 st", name:"BOOCUP", zh:"BOOCUP浣熊唱片店", map:"https://surl.amap.com/bMkyoQe45CY", addr:"岳阳路28号"},
+        {desc:"대형카페 · 커피타임", name:"Spot Table", zh:"Spot Table", map:"https://surl.amap.com/dSHGeaK10gNG", addr:"陕西北路457号10号104"},
+        {desc:"쇼핑 · 슈슈통", name:"슈슈통", zh:"SHUSHU/TONG(锦沧文华广场店)", map:"https://surl.amap.com/14PSPZEX16S", addr:"南京西路1225号锦沧文华广场2层"},
+        {desc:"쇼핑 · 어반리비보", name:"URBAN REVIVO", zh:"URBAN REVIVO上海吴江路四季坊店", map:"https://surl.amap.com/3WB6UAmH9xI", addr:"吴江路169号四季坊一层"}
+      ]},
+      {time:"", title:"저녁 — 점도덕?", kind:"food", places:[
+        {name:"점도덕?", zh:"点都德·德小馆(正大店)", map:"https://surl.amap.com/88WwL0Ko0Zt", addr:"陆家嘴西路168号正大广场西区6楼614室"}
+      ]},
+      {time:"17:30", title:"칵테일 — 동방명주 뷰", kind:"night", places:[
+        {name:"FLAIR 바", zh:"FLAIR顶层餐厅酒吧", map:"https://surl.amap.com/4q5YtL8o9QL", addr:"世纪大道8号国金中心丽思卡尔顿酒店58楼"}
+      ]},
+      {time:"19:00", title:"숙소 복귀", kind:"stay", places:[h()]},
+      {time:"21:00", title:"클럽 — 젤 맘에 든 곳으로 ㄱㄱ", kind:"night", places:[]}
+    ]
+  },
+  {
+    id:"d5", label:"5일차", date:"2026.10.05", dow:"월",
+    blocks:[
+      {time:"06:00", title:"기상", kind:"stay", places:[h()]},
+      {time:"08:00", title:"출발", kind:"move", places:[
+        {desc:"귀국편 출발 공항", name:"푸동 국제공항", zh:"上海浦东国际机场2号航站", map:"https://surl.amap.com/4bWddJoz7Oe", addr:"机场镇纬一路100号"}
+      ]},
+      {time:"08:30", title:"귀국편 FM8753 — 푸둥 출발 (중국시간)", kind:"move", places:[]},
+      {time:"11:00", title:"체크아웃", kind:"stay", places:[h()]}
+    ]
+  }
+];
+
+var OVERVIEW = [
+  {date:"10.01", dow:"목", rows:[["09:40","상하이 도착"],["11:00","숙소 도착"],["13:00","체크인 + 정비"],["13:30","점심 (대호춘, 훠궈)"],["15:00","제일백화점\n(헌지우이치엔 웨이팅 걸기)"],["18:30","저녁"],["20:00","숙소 복귀"],["21:00","컨디션 봐서 술 (Roof Bar)"]]},
+  {date:"10.02", dow:"금", rows:[["06:00","기상 !!!"],["08:30","메이크업샵"],["11:30","우캉멘션 ㄱㄱ"],["13:00","점심 + 스냅"],["15:00","쇼핑\n(우캉멘션 + 우캉루)"],["19:00","저녁"],["20:00","숙소 복귀"],["22:00","클럽 (INS)"]]},
+  {date:"10.03", dow:"토", rows:[["10:00","기상 + 아침"],["12:00","출발"],["13:00","임시정부"],["14:30","티엔즈팡"],["16:00","점저"],["17:00","쇼핑"],["18:00","숙소 복귀"],["22:00","클럽 (페리)"]]},
+  {date:"10.04", dow:"일", rows:[["10:00","기상 + 아침"],["12:00","출발"],["13:00","따룬파마트"],["15:00","핫플 사진"],["17:30","Flair Bar"],["19:00","숙소 복귀"],["21:00","클럽"]]},
+  {date:"10.05", dow:"월", rows:[["06:00","기상"],["08:00","출발"],["08:30","귀국편 출발"],["11:00","체크아웃"]]}
+];
+
+var PACK = {
+  "출발 시":["여권/사본","현금","항공권 티켓","숙소 바우처","멀티탭","E심","보조배터리 (CCC)","샤워기 필터","옷","신발","목욕용품","피부","폼클렌징"],
+  "귀국 시 (한국 입국 시)":["기념품"],
+  "출력 필요한 것들":["여권 사본","항공권 E-Ticket","숙소 바우처","기타 예매 바우처"]
+};
+
+var WISH = [
+  {cat:"식당", name:"창빙", en:"Shanghai Grandmother Restaurant", addr:"2nd Floor, No, 399 Jiu Jiang Lu, Huang Pu Qu, Shang Hai Shi, 중국 200002", note:"로컬 간식", q:"Shanghai Grandmother Restaurant 上海"},
+  {cat:"쇼핑", name:"Harmay", en:"Harmay", addr:"", note:"샘플샵", q:"HARMAY話梅 上海"},
+  {cat:"쇼핑", name:"칭즈 핸드크림", en:"Qingzhi", addr:"", note:"", q:"青稚护手霜 上海"},
+  {cat:"식당", name:"하이디라오", en:"", addr:"", note:"", q:"海底捞 上海"}
+];
+
+var PLANNER = "https://travel-gray-two.vercel.app/trips/837dfae8-9eeb-4910-aa20-9c86112f1b5f/places";
+
+/* ============ 유틸 ============ */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function amap(p){
+  if(p.map) return p.map;
+  var q = p.zh || p.name || "";
+  return "https://www.amap.com/search?query=" + encodeURIComponent(q);
+}
+var ICON_CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 5.5 5.5L20 7"/></svg>';
+var ICON_LINK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>';
+var ICON_MAP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 3 5.5v15L9 18l6 3 6-2.5v-15L15 6 9 3z"/><path d="M9 3v15M15 6v15"/></svg>';
+
+function zhChip(zh){
+  if(!zh) return "";
+  return '<span class="zh"><span class="zh-t">'+esc(zh)+'</span>'
+    + '<button class="zh-b" type="button" data-copy="'+esc(zh)+'">복사</button></span>';
+}
+
+function placeHTML(p){
+  var out = '<div class="place">';
+  if(p.desc) out += '<div class="place-desc">'+esc(p.desc)+'</div>';
+  if(p.name) out += '<div class="place-name">'+esc(p.name)+'</div>';
+  if(p.zh && p.zh !== p.name) out += '<div class="place-zh">'+zhChip(p.zh)+'</div>';
+  var meta = "";
+  if(p.addr) meta += '<div class="meta-row"><span class="meta-l">주소</span><span class="meta-v">'+esc(p.addr)+'</span></div>';
+  if(p.note) meta += '<div class="meta-row"><span class="meta-l">메모</span><span class="meta-v">'+esc(p.note)+'</span></div>';
+  if(p.link) meta += '<div class="meta-row"><span class="meta-l">참고</span><span class="meta-v"><a href="'+esc(p.link)+'" target="_blank" rel="noopener">블로그 글 보기</a></span></div>';
+  if(meta) out += '<div class="place-meta">'+meta+'</div>';
+  out += '<a class="btn'+(p.map?"":" ghost")+'" href="'+esc(amap(p))+'" target="_blank" rel="noopener">'+ICON_MAP
+      + (p.map ? "고덕지도" : "고덕지도 검색") + '</a>';
+  out += '</div>';
+  return out;
+}
+
+function blockHTML(b){
+  var t = b.time ? '<span class="item-time tnum">'+esc(b.time)+'</span>' : '<span class="item-time none">시간 미정</span>';
+  var out = '<div><div class="item-head">'+t+'<span class="item-kind">'+KINDLABEL[b.kind]+'</span></div>';
+  out += '<div class="card item-card"><div class="item-title">'+esc(b.title)+'</div>';
+  if(b.note) out += '<div class="item-note">'+esc(b.note)+'</div>';
+  if(b.places && b.places.length){
+    out += '<div class="places">' + b.places.map(placeHTML).join("") + '</div>';
+  }
+  out += '</div></div>';
+  return out;
+}
+
+function dayHTML(d){
+  var count = 0;
+  d.blocks.forEach(function(b){ count += (b.places?b.places.length:0); });
+  var out = '<div class="dayhead"><span class="n">'+esc(d.label)+'</span>'
+    + '<span class="d tnum">'+esc(d.date)+' ('+esc(d.dow)+')</span>'
+    + '<span class="c">장소 '+count+'곳</span></div>';
+  out += '<div class="tl">' + d.blocks.map(blockHTML).join("") + '</div>';
+  return out;
+}
+
+/* ---------- 요약 패널 ---------- */
+function summaryHTML(){
+  var out = '';
+  out += '<section class="hero">'
+    + '<h1>2026 상하이 4박 5일</h1>'
+    + '<p class="hero-sub">10월 1일(목) 인천 출발 — 10월 5일(월) 푸둥 출발. 숙소는 난징동루 라디슨 컬렉션 하이랜드 한 곳.</p>'
+    + '<a class="btn-primary" href="'+esc(PLANNER)+'" target="_blank" rel="noopener">'+ICON_LINK+'플래너 링크 열기</a>'
+    + '</section>';
+
+  out += '<section><div class="sec-head"><h2>항공편</h2><span class="k">대한항공(상해)</span></div>'
+    + '<div class="card"><div class="rowgrid">'
+    + '<div><div class="leg-label">출국편 · 10.01 (목)</div>'
+      + '<div class="leg-main"><span class="leg-time tnum">08:25</span><span class="leg-port">인천 출발</span></div>'
+      + '<div class="leg-tz">한국시간(KST) · 중국시간 기준 07:25</div>'
+      + '<div class="leg-meta"><span class="kv">편명 <b>FM8752</b></span><span class="kv">상하이 도착 <b class="tnum">09:40</b> (중국시간)</span></div></div>'
+    + '<div><div class="leg-label">귀국편 · 10.05 (월)</div>'
+      + '<div class="leg-main"><span class="leg-time tnum">08:30</span><span class="leg-port">푸둥 출발</span></div>'
+      + '<div class="leg-tz">중국시간(CST)</div>'
+      + '<div class="leg-meta"><span class="kv">편명 <b>FM8753</b></span></div></div>'
+    + '</div><p style="margin-top:var(--sp-md); font-size:12px; color:var(--tertiary)">예약번호는 보안을 위해 웹사이트에서 제외했습니다.</p></div></section>';
+
+  out += '<section><div class="sec-head"><h2>숙소</h2><span class="k">4박</span></div>'
+    + '<div class="card">'
+    + '<div class="stay-name">'+esc(HOTEL.name)+'</div>'
+    + '<div class="stay-zh">'+zhChip(HOTEL.zh)+'</div>'
+    + '<div class="stay-addr">上海市黄浦区南京东路505号(南京东路地铁站4号口步行150米)</div>'
+    + '<a class="btn" href="'+esc(HOTEL.map)+'" target="_blank" rel="noopener">'+ICON_MAP+'고덕지도</a>'
+    + '<div class="stay-inout">'
+      + '<div class="inout"><div class="inout-l">체크인</div><div class="inout-v tnum">14:00</div><div class="inout-d">10.01 (목) 오후 2시 · 중국시간</div></div>'
+      + '<div class="inout"><div class="inout-l">체크아웃</div><div class="inout-v tnum">11:00</div><div class="inout-d">10.05 (월) · 중국시간</div></div>'
+    + '</div></div></section>';
+
+  out += '<section><div class="sec-head"><h2>일자별 흐름</h2><span class="k">옆으로 스크롤 · 중국시간</span></div>'
+    + '<div class="ovwrap"><div class="ov">'
+    + OVERVIEW.map(function(d){
+        return '<div class="ovday"><div class="ovday-h"><span class="ovday-n tnum">'+esc(d.date)+'</span><span class="ovday-d">('+esc(d.dow)+')</span></div>'
+          + '<div class="ovlist">' + d.rows.map(function(r){
+              return '<div class="ovrow"><span class="t tnum">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>';
+            }).join("") + '</div></div>';
+      }).join("")
+    + '</div></div></section>';
+
+  var totalPack = 0; Object.keys(PACK).forEach(function(k){ totalPack += PACK[k].length; });
+  out += '<section><div class="sec-head"><h2>준비물</h2><span class="k" id="packCount">0 / '+totalPack+'</span></div>'
+    + '<div class="card"><div class="cols">'
+    + Object.keys(PACK).map(function(g){
+        return '<div><div class="col-l">'+esc(g)+'</div><div class="checks">'
+          + PACK[g].map(function(item){
+              var id = g+"::"+item;
+              return '<button class="chk" type="button" data-pack="'+esc(id)+'" aria-pressed="false">'
+                + '<span class="box">'+ICON_CHECK+'</span><span class="chk-t">'+esc(item)+'</span></button>';
+            }).join("")
+          + '</div></div>';
+      }).join("")
+    + '</div></div></section>';
+
+  return out;
+}
+
+/* ---------- 갈 곳들 ---------- */
+function wishHTML(){
+  var out = '<div class="dayhead"><span class="n">갈 곳들</span><span class="d">아직 일정에 안 넣은 후보</span></div>';
+  out += '<div class="card wish" style="margin-top:16px">'
+    + WISH.map(function(w){
+        var o = '<div class="wrow"><span class="wtag">'+esc(w.cat)+'</span><div class="wmain">'
+          + '<div class="wname">'+esc(w.name)+'</div>';
+        if(w.en && w.en !== w.name) o += '<div class="wsub">'+esc(w.en)+'</div>';
+        if(w.addr) o += '<div class="wsub">'+esc(w.addr)+'</div>';
+        if(w.note) o += '<div class="wsub">'+esc(w.note)+'</div>';
+        o += '<a class="btn ghost" href="https://www.amap.com/search?query='+encodeURIComponent(w.q)+'" target="_blank" rel="noopener">'+ICON_MAP+'고덕지도 검색</a>';
+        o += '</div></div>';
+        return o;
+      }).join("")
+    + '</div>';
+  return out;
+}
+
+/* ============ 렌더 ============ */
+var TABS = [{id:"sum", t:"요약"}]
+  .concat(DAYS.map(function(d){ return {id:d.id, t:d.label}; }))
+  .concat([{id:"wish", t:"갈 곳들"}]);
+
+var tabsEl = document.getElementById("tabs");
+var panelsEl = document.getElementById("panels");
+
+tabsEl.innerHTML = TABS.map(function(t){
+  return '<button class="tab" type="button" role="tab" id="tab-'+t.id+'" data-tab="'+t.id+'" aria-selected="false" aria-controls="panel-'+t.id+'">'+esc(t.t)+'</button>';
+}).join("");
+
+panelsEl.innerHTML = TABS.map(function(t){
+  var body = t.id === "sum" ? summaryHTML()
+           : t.id === "wish" ? wishHTML()
+           : dayHTML(DAYS.filter(function(d){ return d.id === t.id; })[0]);
+  return '<div class="panel" id="panel-'+t.id+'" role="tabpanel" aria-labelledby="tab-'+t.id+'" hidden>'+body+'</div>';
+}).join("");
+
+function store(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+
+function select(id){
+  TABS.forEach(function(t){
+    var tab = document.getElementById("tab-"+t.id);
+    var panel = document.getElementById("panel-"+t.id);
+    var on = t.id === id;
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+    panel.hidden = !on;
+  });
+  store("sh26.tab", id);
+  var el = document.querySelector('[data-tab="'+id+'"]');
+  if(el && el.scrollIntoView) el.scrollIntoView({block:"nearest", inline:"nearest"});
+}
+
+tabsEl.addEventListener("click", function(e){
+  var b = e.target.closest("[data-tab]");
+  if(b){ select(b.getAttribute("data-tab")); window.scrollTo({top:0, behavior:"smooth"}); }
+});
+
+var saved = store("sh26.tab");
+select(saved && TABS.some(function(t){ return t.id === saved; }) ? saved : "sum");
+
+/* 준비물 체크 */
+function packState(){
+  try{ return JSON.parse(store("sh26.pack") || "{}") || {}; }catch(e){ return {}; }
+}
+function packCount(){
+  var s = packState(), n = 0;
+  document.querySelectorAll("[data-pack]").forEach(function(b){ if(s[b.getAttribute("data-pack")]) n++; });
+  var el = document.getElementById("packCount");
+  if(el) el.textContent = n + el.textContent.slice(el.textContent.indexOf(" / "));
+}
+(function initPack(){
+  var s = packState();
+  document.querySelectorAll("[data-pack]").forEach(function(b){
+    if(s[b.getAttribute("data-pack")]) b.setAttribute("aria-pressed","true");
+  });
+  packCount();
+})();
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-pack]");
+  if(!b) return;
+  var on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on ? "true" : "false");
+  var s = packState();
+  if(on) s[b.getAttribute("data-pack")] = 1; else delete s[b.getAttribute("data-pack")];
+  store("sh26.pack", JSON.stringify(s));
+  packCount();
+});
+
+/* 중국어 이름 복사 */
+document.addEventListener("click", function(e){
+  var b = e.target.closest("[data-copy]");
+  if(!b) return;
+  var text = b.getAttribute("data-copy");
+  var done = function(){
+    b.textContent = "복사됨";
+    b.classList.add("ok");
+    setTimeout(function(){ b.textContent = "복사"; b.classList.remove("ok"); }, 1400);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else { fallback(); }
+  function fallback(){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    }catch(err){
+      b.textContent = "길게 눌러 복사";
+      setTimeout(function(){ b.textContent = "복사"; }, 1800);
+    }
+  }
+});
+
+</script>
+</body>
+</html>
